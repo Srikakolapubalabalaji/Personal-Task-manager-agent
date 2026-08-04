@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
+    # Frontend URL (For OAuth redirects & CORS)
+    FRONTEND_URL: str = "http://localhost:3000"
+
     # Google OAuth 2.0
     GOOGLE_CLIENT_ID: Optional[str] = None
     GOOGLE_CLIENT_SECRET: Optional[str] = None
@@ -32,6 +35,7 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:8000",
+        "https://*.onrender.com",
     ]
 
     model_config = SettingsConfigDict(

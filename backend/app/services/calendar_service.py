@@ -28,8 +28,8 @@ class CalendarService:
                 f"&response_type=code&scope={scope}&access_type=offline&prompt=consent&state={user_id}"
             )
         else:
-            # Fallback to local OAuth callback handler
-            return f"http://localhost:8000/api/v1/calendar/callback?mock=true&state={user_id}"
+            # Fallback to mock OAuth callback handler
+            return f"{settings.API_V1_STR}/calendar/callback?mock=true&state={user_id}"
 
     @staticmethod
     def save_tokens(

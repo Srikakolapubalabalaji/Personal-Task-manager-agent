@@ -16,9 +16,11 @@ app = FastAPI(
 )
 
 # Set up CORS middleware
+origins = list(set(settings.BACKEND_CORS_ORIGINS + [settings.FRONTEND_URL]))
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=origins,
+    allow_origin_regex=r"https://.*\.onrender\.com",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

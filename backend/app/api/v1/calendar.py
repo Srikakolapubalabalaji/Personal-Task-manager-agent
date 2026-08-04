@@ -39,18 +39,18 @@ async def google_oauth_callback(
     and persists access & refresh tokens securely in PostgreSQL/SQLite DB.
     """
     if error:
-        return RedirectResponse(url="http://localhost:3000/calendar?error=" + error)
+        return RedirectResponse(url=f"{settings.FRONTEND_URL}/calendar?error=" + error)
 
     user_id = state
     if not user_id:
-        return RedirectResponse(url="http://localhost:3000/calendar?error=invalid_state")
+        return RedirectResponse(url=f"{settings.FRONTEND_URL}/calendar?error=invalid_state")
 
     if mock or not settings.GOOGLE_CLIENT_SECRET:
         # Save mock integration for testing
         CalendarService.save_tokens(
             db, user_id, access_token="mock_google_access_token", refresh_token="mock_google_refresh_token"
         )
-        return RedirectResponse(url="http://localhost:3000/calendar?connected=true")
+        return RedirectResponse(url=f"{settings.FRONTEND_URL}/calendar?connected=true")
 
     # Exchange code for token with Google Token Endpoint
     token_url = "https://oauth2.googleapis.com/token"
@@ -65,7 +65,7 @@ async def google_oauth_callback(
     async with httpx.AsyncClient() as client:
         res = await client.post(token_url, data=data)
         if res.status_code != 200:
-            return RedirectResponse(url="http://localhost:3000/calendar?error=token_exchange_failed")
+            return RedirectResponse(url=f"{settings.FRONTEND_URL}/calendar?error=token_exchange_failed")
         tokens = res.json()
 
     access_token = tokens.get("access_token")
@@ -73,7 +73,7 @@ async def google_oauth_callback(
     expires_in = tokens.get("expires_in", 3600)
 
     CalendarService.save_tokens(db, user_id, access_token, refresh_token, expires_in)
-    return RedirectResponse(url="http://localhost:3000/calendar?connected=true")
+    return RedirectResponse(url=f"{settings.FRONTEND_URL}/calendar?connected=true")
 
 
 @router.get("/status", response_model=CalendarStatusResponse)

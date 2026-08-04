@@ -59,7 +59,7 @@ def get_me(current_user: User = Depends(get_current_user)):
 @router.get("/google/url")
 def get_google_oauth_url():
     if not settings.GOOGLE_CLIENT_ID:
-        return {"auth_url": "http://localhost:3000/login?mock_oauth=true"}
+        return {"auth_url": f"{settings.FRONTEND_URL}/login?mock_oauth=true"}
     
     params = {
         "client_id": settings.GOOGLE_CLIENT_ID,
@@ -80,10 +80,10 @@ async def google_oauth_callback(
     db: Session = Depends(get_db)
 ):
     if error or not code:
-        return RedirectResponse(url="http://localhost:3000/login?error=oauth_failed")
+        return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?error=oauth_failed")
 
     if not settings.GOOGLE_CLIENT_SECRET or not settings.GOOGLE_CLIENT_ID:
-        return RedirectResponse(url="http://localhost:3000/login?error=missing_credentials")
+        return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?error=missing_credentials")
 
     token_url = "https://oauth2.googleapis.com/token"
     data = {
@@ -97,7 +97,7 @@ async def google_oauth_callback(
     async with httpx.AsyncClient() as client:
         res = await client.post(token_url, data=data)
         if res.status_code != 200:
-            return RedirectResponse(url="http://localhost:3000/login?error=token_exchange_failed")
+            return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?error=token_exchange_failed")
         
         tokens = res.json()
         access_token_google = tokens.get("access_token")
@@ -108,14 +108,14 @@ async def google_oauth_callback(
             headers={"Authorization": f"Bearer {access_token_google}"}
         )
         if userinfo_res.status_code != 200:
-            return RedirectResponse(url="http://localhost:3000/login?error=userinfo_failed")
+            return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?error=userinfo_failed")
         
         user_info = userinfo_res.json()
         email = user_info.get("email")
         name = user_info.get("name", email.split("@")[0] if email else "Google User")
 
     if not email:
-        return RedirectResponse(url="http://localhost:3000/login?error=email_missing")
+        return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?error=email_missing")
 
     user = db.query(User).filter(User.email == email).first()
     if not user:
@@ -129,7 +129,7 @@ async def google_oauth_callback(
         db.refresh(user)
 
     jwt_token = create_access_token(subject=user.id)
-    return RedirectResponse(url=f"http://localhost:3000/login?token={jwt_token}")
+    return RedirectResponse(url=f"{settings.FRONTEND_URL}/login?token={jwt_token}")
 
 
 @router.post("/google/mock", response_model=Token)
