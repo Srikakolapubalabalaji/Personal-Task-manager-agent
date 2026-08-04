@@ -11,38 +11,29 @@ const client = axios.create({
 });
 
 // Auto-attach JWT token if present in localStorage
-client.interceptors.request.use(async (config) => {
+client.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    let token = localStorage.getItem('token');
-    if (!token && !config.url?.includes('/auth/')) {
-      // Auto register/login demo user to guarantee seamless backend database connectivity
-      try {
-        const authRes = await axios.post(`${API_BASE}/auth/register`, {
-          email: 'demo@taskagent.ai',
-          password: 'Password123!',
-          full_name: 'Demo User'
-        });
-        token = authRes.data.access_token;
-        localStorage.setItem('token', token);
-      } catch {
-        try {
-          const authRes = await axios.post(`${API_BASE}/auth/login`, {
-            email: 'demo@taskagent.ai',
-            password: 'Password123!'
-          });
-          token = authRes.data.access_token;
-          localStorage.setItem('token', token);
-        } catch (e) {
-          console.error("Auto-auth failed", e);
-        }
-      }
-    }
+    const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
   return config;
 });
+
+// Response interceptor to handle 401 Unauthorized
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      if (!window.location.pathname.startsWith('/login')) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const api = {
   // Auth
@@ -56,6 +47,24 @@ export const api = {
 
   async register(email: string, password: string, full_name: string) {
     const res = await client.post('/auth/register', { email, password, full_name });
+    if (res.data.access_token && typeof window !== 'undefined') {
+      localStorage.setItem('token', res.data.access_token);
+    }
+    return res.data;
+  },
+
+  async getMe() {
+    const res = await client.get('/auth/me');
+    return res.data;
+  },
+
+  async getGoogleOAuthUrl(): Promise<string> {
+    const res = await client.get('/auth/google/url');
+    return res.data.auth_url;
+  },
+
+  async loginWithGoogleMock() {
+    const res = await client.post('/auth/google/mock');
     if (res.data.access_token && typeof window !== 'undefined') {
       localStorage.setItem('token', res.data.access_token);
     }

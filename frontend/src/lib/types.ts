@@ -1,6 +1,14 @@
 export type TaskPriority = 'HIGH' | 'MEDIUM' | 'LOW';
 export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
+export interface User {
+  id: string;
+  email: string;
+  full_name?: string;
+  created_at: string;
+}
+
+
 export interface Subtask {
   id: string;
   task_id: string;
